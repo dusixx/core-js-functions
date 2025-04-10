@@ -118,10 +118,11 @@ function memoize(func) {
   memoize.cache = memoize.cache || new Map();
   const { cache } = memoize;
 
-  cache.set(func, func());
-
   return function memoizer() {
-    return cache.has(func) ? cache.get(func) : func();
+    if (!cache.has(func)) {
+      cache.set(func, func());
+    }
+    return cache.get(func);
   };
 }
 
