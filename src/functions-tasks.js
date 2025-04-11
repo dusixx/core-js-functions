@@ -118,11 +118,18 @@ function memoize(func) {
   memoize.cache = memoize.cache || new Map();
   const { cache } = memoize;
 
-  return function memoizer() {
+  return function memoized(...args) {
+    const argsStr = JSON.stringify(args);
+
     if (!cache.has(func)) {
-      cache.set(func, func());
+      cache.set(func, new Map());
     }
-    return cache.get(func);
+    const funcCache = cache.get(func);
+
+    if (!funcCache.has(argsStr)) {
+      funcCache.set(argsStr, func(...args));
+    }
+    return funcCache.get(argsStr);
   };
 }
 
@@ -183,12 +190,19 @@ function retry(func, attempts) {
  *
  */
 function logger(func, logFunc) {
-  return function logger_(...args) {
+  if (typeof func !== 'function') {
+    return null;
+  }
+  if (typeof logFunc !== 'function') {
+    return func;
+  }
+  return function logged(...args) {
     const argsStr = args.map(JSON.stringify).flat();
+    const funcName = func.name || '<anonymous>';
 
-    logFunc(`${func.name}(${argsStr}) starts`);
+    logFunc(`${funcName}(${argsStr}) starts`);
     const result = func(...args);
-    logFunc(`${func.name}(${argsStr}) ends`);
+    logFunc(`${funcName}(${argsStr}) ends`);
 
     return result;
   };
